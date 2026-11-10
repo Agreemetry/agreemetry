@@ -1,0 +1,48 @@
+{
+  "name": "agreemetry",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Independent judgments, transparent consensus, reproducible reliability: an open-source research adjudication and interrater reliability platform.",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/agreemetry/agreemetry#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agreemetry/agreemetry.git"
+  },
+  "bugs": {
+    "url": "https://github.com/agreemetry/agreemetry/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json",
+    "test:e2e": "node tests/e2e/smoke.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.50.0",
+    "fflate": "0.8.3",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.11",
+    "@types/react": "18.3.23",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "4.5.2",
+    "puppeteer-core": "25.15.0",
+    "typescript": "5.8.3",
+    "vite": "6.4.5",
+    "vitest": "4.1.12"
+  },
+  "overrides": {
+    "rollup": "npm:@rollup/wasm-node@4.65.0"
+  }
+}

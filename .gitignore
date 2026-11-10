@@ -1,0 +1,14 @@
+node_modules/
+dist/
+e2e-shots/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+supabase/.temp/
+# Bundled project archives are local only: study material must never be committed.
+public/projects/*
+!public/projects/README.md
+# Tests for private study bundles, kept outside the public repository.
+tests/private/

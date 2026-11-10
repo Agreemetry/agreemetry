@@ -1,0 +1,4 @@
+# Changes to rules, statistics and the schema need a maintainer's review.
+*                    @tiamole
+/supabase/           @tiamole
+/src/core/           @tiamole

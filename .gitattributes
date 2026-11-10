@@ -1,0 +1,5 @@
+# Store text with LF line endings for every platform.
+* text=auto eol=lf
+*.png binary
+*.gz binary
+*.xlsx binary

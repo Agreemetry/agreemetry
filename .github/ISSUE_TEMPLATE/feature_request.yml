@@ -1,0 +1,22 @@
+name: Feature request
+description: Propose an improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: The research workflow
+      description: What are you trying to do in your study, and where does Agreemetry get in the way?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+    validations:
+      required: true
+  - type: textarea
+    id: blinding
+    attributes:
+      label: Effect on blinding or reliability
+      description: Would the change let anyone see judgments, blinded fields or names they cannot see now, or change how reliability is computed?

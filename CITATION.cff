@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If Agreemetry supports your research, please cite it as below."
+title: "Agreemetry: research adjudication and interrater reliability"
+type: software
+abstract: >-
+  Agreemetry is an open-source web platform for independent judgment by two or more adjudicators,
+  transparent resolution of disagreements, and reproducible interrater reliability, with blinding,
+  an append-only audit log, analysis-ready exports, lab accounts and an API.
+authors:
+  - given-names: Taiwo
+    family-names: Feyijimi
+    alias: tiamole
+repository-code: "https://github.com/agreemetry/agreemetry"
+license: Apache-2.0
+version: 1.0.0
+keywords:
+  - interrater reliability
+  - adjudication
+  - consensus
+  - Cohen's kappa
+  - Krippendorff's alpha
+  - systematic review screening
+  - qualitative coding
+  - research software

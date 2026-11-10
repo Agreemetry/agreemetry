@@ -1,0 +1,56 @@
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Build
+        run: npm run build
+        env:
+          # "/" with a custom domain; otherwise the site lives under /<repository>/.
+          BASE_PATH: ${{ vars.BASE_PATH || format('/{0}/', github.event.repository.name) }}
+          # Repository variables (Settings > Secrets and variables > Actions > Variables). Leave the Supabase
+          # ones unset for the local-workspace build. The anon key is public by design; never add the
+          # service-role key. Everything here ends up in the public JavaScript bundle.
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_AUTH_PROVIDERS: ${{ vars.VITE_AUTH_PROVIDERS }}
+          VITE_TERMS_URL: ${{ vars.VITE_TERMS_URL }}
+          VITE_PRIVACY_URL: ${{ vars.VITE_PRIVACY_URL }}
+          VITE_OPERATOR_NAME: ${{ vars.VITE_OPERATOR_NAME }}
+      - name: Keep bundled research projects out of the public site unless explicitly enabled
+        if: ${{ vars.PUBLISH_BUNDLED_PROJECTS != 'true' }}
+        run: |
+          rm -rf dist/projects
+          mkdir -p dist/projects
+          echo '{"projects":[]}' > dist/projects/index.json
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
