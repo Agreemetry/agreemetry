@@ -3,8 +3,10 @@
  * whenever there are two or more series, and a table alternative next to each chart.
  */
 import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { raterColor } from './components';
 
-const SERIES = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)'];
+/** Series are adjudicators: each keeps the identity colour it has everywhere else (R1 to R4). */
+const seriesColor = (name: string, k: number) => raterColor(name, k) ?? 'var(--muted)';
 
 interface TipState {
   x: number;
@@ -33,12 +35,21 @@ export interface Segment {
   label: string;
   value: number;
   color: string;
+  /** Legend group, such as Settled, Open or Pending. */
+  group?: string;
 }
 
-/** One stacked bar of workflow states, with a legend that carries the counts. */
+/** One stacked bar of workflow states, with a legend that carries the counts, grouped by meaning when given. */
 export function StatusBar({ segments, total }: { segments: Segment[]; total: number }) {
   const t = useTip();
   const shown = segments.filter((s) => s.value > 0);
+  const groups = [...new Set(segments.map((s) => s.group).filter((g): g is string => Boolean(g)))];
+  const item = (s: Segment) => (
+    <span key={s.label}>
+      <i style={{ background: s.color }} />
+      {s.label} <strong className="num">{s.value}</strong>
+    </span>
+  );
   return (
     <div>
       <div className="statusbar" role="img" aria-label={shown.map((s) => `${s.label} ${s.value}`).join(', ')}>
@@ -46,14 +57,18 @@ export function StatusBar({ segments, total }: { segments: Segment[]; total: num
           <span key={s.label} style={{ width: `${(s.value / Math.max(total, 1)) * 100}%`, background: s.color }} onMouseMove={(e) => t.show(e, <><strong>{s.label}</strong><br />{s.value} of {total} ({((s.value / Math.max(total, 1)) * 100).toFixed(1)}%)</>)} onMouseLeave={t.hide} />
         ))}
       </div>
-      <div className="legend">
-        {segments.map((s) => (
-          <span key={s.label}>
-            <i style={{ background: s.color }} />
-            {s.label} <strong className="num">{s.value}</strong>
-          </span>
-        ))}
-      </div>
+      {groups.length ? (
+        <div className="legend-groups">
+          {groups.map((g) => (
+            <div key={g}>
+              <h4>{g} <span className="num">{segments.filter((s) => s.group === g).reduce((n, s) => n + s.value, 0)}</span></h4>
+              <div className="legend">{segments.filter((s) => s.group === g).map(item)}</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="legend">{segments.map(item)}</div>
+      )}
       {t.node}
     </div>
   );
@@ -78,8 +93,10 @@ export function ForestPlot({ rows, min = -0.2, max = 1, refLines = [0], unit = '
   const left = 190;
   const right = 70;
   const rowH = 28;
-  const H = rows.length * rowH + 30;
+  const top = 18;
+  const H = rows.length * rowH + 30 + top;
   const x = (v: number) => left + ((v - lo) / (hi - lo || 1)) * (W - left - right);
+  const marks = refLines.includes(0) ? [{ v: 0, label: 'chance' }, { v: 1, label: 'perfect' }].filter((m) => m.v >= lo && m.v <= hi) : [];
   const ticks = useMemo(() => {
     const step = hi - lo > 1.5 ? 0.5 : 0.2;
     const out: number[] = [];
@@ -89,23 +106,29 @@ export function ForestPlot({ rows, min = -0.2, max = 1, refLines = [0], unit = '
   return (
     <div>
       <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Estimates with 95% intervals">
+        {refLines.includes(0) && lo < 0 && (
+          <rect x={x(lo)} y={top} width={x(0) - x(lo)} height={H - 22 - top} fill="var(--dispute-soft)" opacity={0.7}>
+            <title>Below 0: less agreement than chance would give</title>
+          </rect>
+        )}
         {ticks.map((v) => (
           <g key={v}>
-            <line className="grid" x1={x(v)} x2={x(v)} y1={4} y2={H - 22} />
+            <line className="grid" x1={x(v)} x2={x(v)} y1={top} y2={H - 22} />
             <text x={x(v)} y={H - 6} textAnchor="middle">{v.toFixed(1)}</text>
           </g>
         ))}
-        {refLines.map((v) => <line key={`r${v}`} className="axis" x1={x(v)} x2={x(v)} y1={4} y2={H - 22} strokeDasharray="3 3" />)}
+        {refLines.map((v) => <line key={`r${v}`} className="axis" x1={x(v)} x2={x(v)} y1={top - 4} y2={H - 22} strokeDasharray="3 3" />)}
+        {marks.map((m) => <text key={m.label} className="ref-label" x={x(m.v)} y={top - 7} textAnchor="middle">{m.label}</text>)}
         {rows.map((r, i) => {
-          const y = 14 + i * rowH;
+          const y = top + 14 + i * rowH;
           const ok = Number.isFinite(r.value);
           return (
             <g key={r.label + i} tabIndex={0} onMouseMove={(e) => t.show(e, <><strong>{r.label}</strong><br />{ok ? r.value.toFixed(3) : 'undefined'}{unit}{r.lo !== undefined && Number.isFinite(r.lo) ? ` [${r.lo.toFixed(3)}, ${r.hi!.toFixed(3)}]` : ''}<br />n = {r.n}{r.note ? <><br />{r.note}</> : null}</>)} onMouseLeave={t.hide} onFocus={(e) => t.show(e, `${r.label}: ${ok ? r.value.toFixed(3) : 'undefined'}`)} onBlur={t.hide}>
               <rect x={0} y={y - rowH / 2} width={W} height={rowH} fill="transparent" />
               <text x={left - 10} y={y + 4} textAnchor="end" style={{ fill: 'var(--ink)' }}>{r.label.length > 30 ? r.label.slice(0, 29) + '…' : r.label}</text>
-              {ok && r.lo !== undefined && Number.isFinite(r.lo) && Number.isFinite(r.hi) && <line x1={x(r.lo)} x2={x(r.hi!)} y1={y} y2={y} stroke="var(--series-1)" strokeWidth={2} strokeLinecap="round" />}
-              {ok ? <circle cx={x(r.value)} cy={y} r={5} fill="var(--series-1)" stroke="var(--surface)" strokeWidth={2} /> : <text x={left + 4} y={y + 4} className="muted">undefined</text>}
-              <text x={W - right + 8} y={y + 4} className="num">{ok ? r.value.toFixed(2) : 'NA'}</text>
+              {ok && r.lo !== undefined && Number.isFinite(r.lo) && Number.isFinite(r.hi) && <line x1={x(r.lo)} x2={x(r.hi!)} y1={y} y2={y} stroke="var(--estimate)" strokeWidth={2} strokeLinecap="round" />}
+              {ok ? <circle cx={x(r.value)} cy={y} r={5} fill="var(--estimate)" stroke="var(--surface)" strokeWidth={2} /> : <text x={left + 4} y={y + 4} className="muted">undefined</text>}
+              <text x={W - right + 8} y={y + 4} className="num" style={{ fill: 'var(--ink)', fontWeight: 600 }}>{ok ? r.value.toFixed(2) : 'NA'}</text>
             </g>
           );
         })}
@@ -115,15 +138,20 @@ export function ForestPlot({ rows, min = -0.2, max = 1, refLines = [0], unit = '
   );
 }
 
-/** Cross-tabulation of two raters as a heat table (sequential blue), diagonal outlined. */
+/**
+ * Cross-tabulation of two raters. Two one-hue ramps: the diagonal (same category, agreement) in teal and the
+ * off-diagonal (disagreement) in orange, each darker with more items, so where the disagreements sit shows at once.
+ */
 export function CrossHeat({ rowLabel, colLabel, categories, counts }: { rowLabel: string; colLabel: string; categories: { value: string; label: string }[]; counts: number[][] }) {
   const max = Math.max(1, ...counts.flat());
   const total = counts.flat().reduce((s, x) => s + x, 0);
-  const bg = (v: number) => {
+  const bg = (v: number, diag: boolean) => {
     const t = v / max;
-    return t === 0 ? 'var(--surface)' : `color-mix(in srgb, var(--seq-500) ${Math.round(12 + t * 70)}%, var(--surface))`;
+    return t === 0 ? 'var(--surface)' : `color-mix(in srgb, var(${diag ? '--state-agreed' : '--state-disagreement'}) ${Math.round(14 + t * 62)}%, var(--surface))`;
   };
+  const ramp = (v: string) => `linear-gradient(90deg, color-mix(in srgb, var(${v}) 14%, var(--surface)), color-mix(in srgb, var(${v}) 76%, var(--surface)))`;
   return (
+    <div>
     <div className="table-wrap">
       <table className="data heat">
         <thead>
@@ -139,9 +167,8 @@ export function CrossHeat({ rowLabel, colLabel, categories, counts }: { rowLabel
               <th>{r.label}</th>
               {categories.map((c, j) => {
                 const v = counts[i]?.[j] ?? 0;
-                const dark = v / max > 0.55;
                 return (
-                  <td key={c.value} className="cell" title={`${r.label} by ${rowLabel}, ${c.label} by ${colLabel}: ${v} (${((v / Math.max(total, 1)) * 100).toFixed(1)}%)`} style={{ background: bg(v), color: dark ? '#fff' : 'var(--ink)', outline: i === j ? '2px solid var(--good)' : undefined, outlineOffset: -2 }}>
+                  <td key={c.value} className="cell" title={`${r.label} by ${rowLabel}, ${c.label} by ${colLabel}: ${v} (${((v / Math.max(total, 1)) * 100).toFixed(1)}%), ${i === j ? 'agreement' : 'disagreement'}`} style={{ background: bg(v, i === j), color: v ? 'var(--ink)' : 'var(--muted)' }}>
                     {v}
                   </td>
                 );
@@ -156,6 +183,12 @@ export function CrossHeat({ rowLabel, colLabel, categories, counts }: { rowLabel
           </tr>
         </tbody>
       </table>
+    </div>
+    <div className="heat-key">
+      <span><i style={{ background: ramp('--state-agreed') }} />Same category (agreement)</span>
+      <span><i style={{ background: ramp('--state-disagreement') }} />Different categories (disagreement)</span>
+      <span className="muted">Darker means more items.</span>
+    </div>
     </div>
   );
 }
@@ -191,7 +224,7 @@ export function CategoryBars({ categories, series }: { categories: { value: stri
                 return (
                   <g key={s.name} onMouseMove={(e) => t.show(e, <><strong>{s.name}</strong>: {c.label}<br />{s.counts[c.value] ?? 0} of {s.total} ({(p * 100).toFixed(1)}%)</>)} onMouseLeave={t.hide}>
                     <rect x={left} y={y - 2} width={W - left} height={barH + 4} fill="transparent" />
-                    <rect x={left} y={y} width={Math.max(0, x(p) - left)} height={barH} rx={3} fill={SERIES[k]} />
+                    <rect x={left} y={y} width={Math.max(0, x(p) - left)} height={barH} rx={3} fill={seriesColor(s.name, k)} />
                   </g>
                 );
               })}
@@ -202,7 +235,7 @@ export function CategoryBars({ categories, series }: { categories: { value: stri
       <div className="legend">
         {series.map((s, k) => (
           <span key={s.name}>
-            <i style={{ background: SERIES[k] }} />
+            <i style={{ background: seriesColor(s.name, k) }} />
             {s.name}
           </span>
         ))}
@@ -258,13 +291,13 @@ export function Cumulative({ series }: { series: { name: string; times: number[]
         <line className="axis" x1={L} x2={W - R} y1={H - B} y2={H - B} />
         <text x={L} y={H - 8}>{fmtDate(t0)}</text>
         <text x={W - R} y={H - 8} textAnchor="end">{fmtDate(t1)}</text>
-        {sorted.map((ts, k) => <path key={series[k].name} d={path(ts)} fill="none" stroke={SERIES[k]} strokeWidth={2} />)}
+        {sorted.map((ts, k) => <path key={series[k].name} d={path(ts)} fill="none" stroke={seriesColor(series[k].name, k)} strokeWidth={2} />)}
         {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={T} y2={H - B} stroke="var(--muted)" strokeDasharray="3 3" />}
       </svg>
       <div className="legend">
         {series.map((s, k) => (
           <span key={s.name}>
-            <i style={{ background: SERIES[k] }} />
+            <i style={{ background: seriesColor(s.name, k) }} />
             {s.name} <strong className="num">{s.times.length}</strong>
           </span>
         ))}

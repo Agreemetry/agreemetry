@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { go, useApp, type ProjectView } from '../app';
-import { DataTable, Empty, Field, Icon, Notice, Seg, StateBadge, type Column } from '../components';
+import { DataTable, Empty, Field, Icon, Notice, RaterChip, Seg, StateBadge, raterColor, type Column } from '../components';
 import { ItemPanel, VariableInput } from './Assess';
 import { agreementVariables, isItemDisclosed, originalSubmission, type ItemStatus } from '../../core/workflow';
 import { canApprove, resolutionChoices, approvalsNeeded } from '../../core/resolution';
@@ -118,16 +118,17 @@ function ResolveItem({ v, item }: { v: ProjectView; item: Item }) {
             <h2>Independent judgments</h2>
             {!disclosedToMe ? <Notice tone="info">Judgments on this item are not disclosed yet.</Notice> : (
               <div className="judgments">
-                {subs.map((a) => {
+                {subs.map((a, k) => {
                   const orig = originalSubmission(a);
                   const amended = orig && JSON.stringify(orig.values) !== JSON.stringify(a.values);
+                  const who = names.get(a.userId) ?? 'Adjudicator';
                   return (
-                    <div key={a.id} className={`judgment ${vars.some((x) => st.disputed.includes(x.id)) ? 'disputed' : ''}`}>
-                      <div className="who">{names.get(a.userId) ?? 'Adjudicator'}{a.userId === me && <span className="badge neutral">you</span>}</div>
+                    <div key={a.id} className={`judgment ${vars.some((x) => st.disputed.includes(x.id)) ? 'disputed' : ''}`} style={{ ['--chip' as string]: raterColor(who, k) }}>
+                      <div className="who"><RaterChip name={who} index={k} />{a.userId === me && <span className="badge neutral">you</span>}</div>
                       {p.config.variables.filter((x) => x.type !== 'text').map((x) => (
                         <div key={x.id} style={{ marginTop: 4 }}>
                           <div className="small muted">{x.label}</div>
-                          <div className="val" style={{ color: st.disputed.includes(x.id) ? 'var(--critical-ink)' : undefined }}>{valueLabel(x, a.values[x.id])}</div>
+                          <div className={`val ${st.disputed.includes(x.id) ? 'disputed' : ''}`}>{valueLabel(x, a.values[x.id])}</div>
                         </div>
                       ))}
                       {p.config.variables.filter((x) => x.type === 'text' && a.values[x.id]).map((x) => (

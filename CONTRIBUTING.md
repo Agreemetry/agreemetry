@@ -42,6 +42,7 @@ To work on the shared-server mode, create a free Supabase project, apply `supaba
 - **Statistics need references.** A new or changed coefficient needs a published worked example or an independent implementation in `tests/reference/` that it matches.
 - **Dependencies.** Avoid new runtime dependencies. If one is needed, explain why in the pull request; pin exact versions.
 - **Accessibility and layout.** Interface changes must work with the keyboard, in dark mode, and at phone width without horizontal scrolling.
+- **Colour has meaning.** Use the design tokens and the colour families in [docs/DESIGN.md](docs/DESIGN.md); never write colour values in components, keep red for errors, and keep the agreement colour out of anything a blind rater sees.
 - **Plain language.** Documentation and interface text are read by researchers from many fields: short sentences, no unexplained abbreviations.
 - **Keep data out.** Do not commit research data, credentials, tokens or `.env` files. `public/projects/` is ignored by git for this reason.
 

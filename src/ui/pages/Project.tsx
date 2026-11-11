@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { SideNav, TopBar, useApp, useProject, type ProjectView } from '../app';
-import { Empty, Field, Help, Notice, Progress, STATE_COLOR, STATE_LABEL, StateBadge, Tile, download } from '../components';
+import { Empty, Field, Help, Notice, Progress, RaterChip, STATE_COLOR, STATE_GROUP, STATE_LABEL, StateBadge, Tile, download, raterColor } from '../components';
 import { LocalBackend } from '../../data/localBackend';
 import { Cumulative, StatusBar } from '../charts';
 import { adjudicators, adjudicatorProgress, summarize, type ItemStatus } from '../../core/workflow';
@@ -166,34 +166,42 @@ function Oversight({ v }: { v: ProjectView }) {
         </div>
       </div>
 
-      <div className="grid tiles" style={{ marginBottom: 16 }}>
-        <Tile label="Items" value={sum.items.toLocaleString()} sub={`${sum.assigned.toLocaleString()} assigned`} />
-        <Tile label="Judgments submitted" value={sum.assessmentsSubmitted.toLocaleString()} sub={`of ${sum.assessmentsRequired.toLocaleString()} required`} help="Submitted independent judgments counted up to the number required per item. Drafts are not counted." />
-        <Tile label="Awaiting other adjudicators" value={sum.inProgress.toLocaleString()} sub={`${sum.awaiting.toLocaleString()} not started`} help="Items with some but not all required judgments. They are never compared, so they cannot be counted as agreement." />
-        <Tile label="Complete agreement" value={sum.agreedComplete.toLocaleString()} sub={sum.complete ? pct(sum.agreedComplete / sum.complete) + ' of compared items' : 'none compared yet'} />
-        {sum.agreedRule > 0 && <Tile label="Agreed by rule" value={sum.agreedRule.toLocaleString()} sub="meets the rule, not unanimous" />}
-        <Tile label="Disagreements" value={sum.disagreements.toLocaleString()} sub={sum.complete ? pct(sum.disagreements / sum.complete) + ` of compared · ${sum.partialDisagreements} partial` : ''} />
-        <Tile label="Resolved" value={sum.resolved.toLocaleString()} />
-        <Tile label="Unresolved disagreements" value={sum.unresolved.toLocaleString()} tone={sum.unresolved ? 'alert' : undefined} sub={`${sum.proposed} with a proposal · ${sum.escalated} escalated`} help="Items whose required independent judgments are all in and which fail the agreement rule, without a final resolution." />
-        <Tile label="Completion" value={pct(sum.completion, 0)} sub={`${sum.finalized.toLocaleString()} items with final values`} tone="accent" />
-      </div>
+      <section className="tile-group" aria-label="Progress">
+        <h4>Progress</h4>
+        <div className="grid tiles">
+          <Tile label="Completion" value={pct(sum.completion, 0)} sub={`${sum.finalized.toLocaleString()} items with final values`} tone="accent" />
+          <Tile label="Items" value={sum.items.toLocaleString()} sub={`${sum.assigned.toLocaleString()} assigned`} />
+          <Tile label="Judgments submitted" value={sum.assessmentsSubmitted.toLocaleString()} sub={`of ${sum.assessmentsRequired.toLocaleString()} required`} help="Submitted independent judgments counted up to the number required per item. Drafts are not counted." />
+          <Tile label="Awaiting other adjudicators" value={sum.inProgress.toLocaleString()} sub={`${sum.awaiting.toLocaleString()} not started`} tone="pending" help="Items with some but not all required judgments. They are never compared, so they cannot be counted as agreement." />
+        </div>
+      </section>
+      <section className="tile-group" aria-label="Agreement and resolution">
+        <h4>Agreement and resolution</h4>
+        <div className="grid tiles">
+          <Tile label="Complete agreement" value={sum.agreedComplete.toLocaleString()} sub={sum.complete ? pct(sum.agreedComplete / sum.complete) + ' of compared items' : 'none compared yet'} tone="agree" />
+          {sum.agreedRule > 0 && <Tile label="Agreed by rule" value={sum.agreedRule.toLocaleString()} sub="meets the rule, not unanimous" tone="agree" />}
+          <Tile label="Disagreements" value={sum.disagreements.toLocaleString()} sub={sum.complete ? pct(sum.disagreements / sum.complete) + ` of compared · ${sum.partialDisagreements} partial` : ''} tone="dispute" />
+          <Tile label="Resolved" value={sum.resolved.toLocaleString()} tone="resolved" />
+          <Tile label="Unresolved disagreements" value={sum.unresolved.toLocaleString()} tone={sum.unresolved ? 'alert' : undefined} sub={`${sum.proposed} with a proposal · ${sum.escalated} escalated`} help="Items whose required independent judgments are all in and which fail the agreement rule, without a final resolution." />
+        </div>
+      </section>
 
       <div className="grid cols-2" style={{ marginBottom: 16 }}>
         <div className="card">
           <div className="card-head"><h2 className="grow">Workflow status</h2></div>
-          <StatusBar total={filtered.length} segments={ORDER.map((k) => ({ label: STATE_LABEL[k], value: counts[k], color: STATE_COLOR[k] }))} />
+          <StatusBar total={filtered.length} segments={ORDER.map((k) => ({ label: STATE_LABEL[k], value: counts[k], color: STATE_COLOR[k], group: STATE_GROUP[k] }))} />
         </div>
         <div className="card">
           <div className="card-head"><h2 className="grow">Adjudicator progress</h2></div>
           {prog.length === 0 ? <p className="muted">No adjudicators yet.</p> : (
             <div className="stack">
-              {prog.map((r) => (
+              {prog.map((r, k) => (
                 <div key={r.userId}>
                   <div className="row small" style={{ justifyContent: 'space-between' }}>
-                    <strong>{r.pseudonym}</strong>
+                    <RaterChip name={r.pseudonym} index={k} />
                     <span className="num ink2">{r.submitted.toLocaleString()} of {r.assigned.toLocaleString()} submitted{r.drafts ? ` · ${r.drafts} drafts` : ''}</span>
                   </div>
-                  <Progress value={r.assigned ? r.submitted / r.assigned : 0} label={`${r.pseudonym} progress`} />
+                  <Progress value={r.assigned ? r.submitted / r.assigned : 0} label={`${r.pseudonym} progress`} color={raterColor(r.pseudonym, k)} />
                 </div>
               ))}
             </div>
@@ -236,7 +244,7 @@ function Oversight({ v }: { v: ProjectView }) {
             {disputedBy.map(({ x, n }) => (
               <div key={x.id}>
                 <div className="row small" style={{ justifyContent: 'space-between' }}><span>{x.label}</span><span className="num">{n}</span></div>
-                <Progress value={sum.complete ? n / sum.complete : 0} label={x.label} />
+                <Progress value={sum.complete ? n / sum.complete : 0} label={x.label} color="var(--state-disagreement)" />
               </div>
             ))}
           </div>
@@ -282,10 +290,10 @@ function MyWork({ v }: { v: ProjectView }) {
         <a className="btn primary" href={`#/p/${data.project.id}/assess`}>Continue assessing</a>
       </div>
       <div className="grid tiles" style={{ marginBottom: 16 }}>
-        <Tile label="Assigned to you" value={mine.length.toLocaleString()} />
         <Tile label="Submitted" value={subs.toLocaleString()} sub={pct(mine.length ? subs / mine.length : 0) + ' done'} tone="accent" />
-        <Tile label="Drafts" value={drafts.toLocaleString()} />
-        <Tile label="Open disagreements" value={open.length.toLocaleString()} help="Shown once judgments on an item are disclosed to you." />
+        <Tile label="Assigned to you" value={mine.length.toLocaleString()} />
+        <Tile label="Drafts" value={drafts.toLocaleString()} tone={drafts ? 'pending' : undefined} />
+        <Tile label="Open disagreements" value={open.length.toLocaleString()} tone={open.length ? 'dispute' : undefined} help="Shown once judgments on an item are disclosed to you." />
       </div>
       <div className="card">
         <Progress value={mine.length ? subs / mine.length : 0} label="Your progress" />

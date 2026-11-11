@@ -43,13 +43,13 @@ export function Icon({ name, size = 16, title }: { name: keyof typeof paths | st
   );
 }
 
-/** Two overlapping circles: separate judgments, a shared region of agreement. */
+/** Two overlapping circles: two independent judgments, and the region where they agree (filled teal). */
 export function Logo({ size = 26 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <circle cx="12" cy="16" r="9" fill="none" stroke="var(--accent)" strokeWidth="2.4" />
-      <circle cx="20" cy="16" r="9" fill="none" stroke="var(--series-3)" strokeWidth="2.4" />
-      <path d="M16 8.6a9 9 0 010 14.8 9 9 0 010-14.8z" fill="var(--accent)" opacity="0.85" />
+      <circle cx="12" cy="16" r="8.6" fill="none" stroke="var(--accent)" strokeWidth="2.6" />
+      <circle cx="20" cy="16" r="8.6" fill="none" stroke="var(--state-agreed)" strokeWidth="2.6" />
+      <path d="M16 9.83a8.6 8.6 0 010 12.34 8.6 8.6 0 010-12.34z" fill="var(--state-agreed)" />
     </svg>
   );
 }
@@ -67,9 +67,33 @@ export const STATE_LABEL: Record<ItemState, string> = {
   resolved: 'Resolved',
 };
 const STATE_ICON: Record<ItemState, string> = { unassigned: 'clock', awaiting: 'clock', in_progress: 'clock', agreed: 'check', disagreement: 'disagree', proposed: 'info', escalated: 'flag', resolved: 'check' };
+/** Workflow colours by family: settled (teal), open disputes (warm, by severity), pending (slate). See docs/DESIGN.md. */
 export const STATE_COLOR: Record<ItemState, string> = {
-  unassigned: 'var(--surface-3)', awaiting: 'var(--line-strong)', in_progress: 'var(--seq-300)', agreed: 'var(--good)', disagreement: 'var(--critical)', proposed: 'var(--warning)', escalated: 'var(--serious)', resolved: 'var(--series-7)',
+  unassigned: 'var(--state-unassigned)', awaiting: 'var(--state-awaiting)', in_progress: 'var(--state-in_progress)', agreed: 'var(--state-agreed)', disagreement: 'var(--state-disagreement)', proposed: 'var(--state-proposed)', escalated: 'var(--state-escalated)', resolved: 'var(--state-resolved)',
 };
+export type StateGroup = 'Settled' | 'Open' | 'Pending';
+export const STATE_GROUP: Record<ItemState, StateGroup> = {
+  agreed: 'Settled', resolved: 'Settled', proposed: 'Open', escalated: 'Open', disagreement: 'Open', in_progress: 'Pending', awaiting: 'Pending', unassigned: 'Pending',
+};
+
+/**
+ * Identity colour of an adjudicator, from the pseudonym's number (R1 to R4) or else the position, so the same
+ * person has the same colour on every page. Past four there is no colour: hues are never generated or cycled.
+ */
+export function raterColor(pseudonym: string | undefined, index = 0): string | undefined {
+  const m = /^R(\d+)$/.exec(pseudonym ?? '');
+  const n = m ? Number(m[1]) : index + 1;
+  return n >= 1 && n <= 4 ? `var(--rater-${n})` : undefined;
+}
+
+export function RaterChip({ name, index = 0 }: { name: string; index?: number }) {
+  return (
+    <span className="rater-chip" style={{ ['--chip' as string]: raterColor(name, index) ?? 'var(--muted)' }}>
+      <i aria-hidden="true" />
+      {name}
+    </span>
+  );
+}
 
 export function StateBadge({ state }: { state: ItemState }) {
   return (
@@ -82,7 +106,9 @@ export function StateBadge({ state }: { state: ItemState }) {
 
 // Building blocks ------------------------------------------------------------------------------------------
 
-export function Tile({ label, value, sub, tone, help }: { label: string; value: ReactNode; sub?: ReactNode; tone?: 'accent' | 'alert'; help?: string }) {
+export type TileTone = 'accent' | 'alert' | 'agree' | 'resolved' | 'dispute' | 'pending';
+
+export function Tile({ label, value, sub, tone, help }: { label: string; value: ReactNode; sub?: ReactNode; tone?: TileTone; help?: string }) {
   return (
     <div className={`tile ${tone ?? ''}`}>
       <div className="label">
@@ -103,11 +129,11 @@ export function Help({ text }: { text: string }) {
   );
 }
 
-export function Progress({ value, label }: { value: number; label?: string }) {
+export function Progress({ value, label, color }: { value: number; label?: string; color?: string }) {
   const v = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
   return (
     <div className="progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(v * 100)} aria-label={label}>
-      <span style={{ width: `${v * 100}%` }} />
+      <span style={{ width: `${v * 100}%`, ['--bar' as string]: color }} />
     </div>
   );
 }

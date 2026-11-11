@@ -1,5 +1,6 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import '@fontsource-variable/inter/wght.css';
 import './ui/styles.css';
 import { AppProvider, TopBar, useApp, useRoute } from './ui/app';
 import { Account, Onboarding, Projects, SignIn } from './ui/pages/Home';

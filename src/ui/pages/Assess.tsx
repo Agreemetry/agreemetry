@@ -246,7 +246,7 @@ function AssessmentForm({ v, item, existing, onPrev, onNext, onSubmitted, save }
     <div className="card panel-sticky stack" aria-label="Your judgment">
       <div className="row">
         <h2 className="grow" style={{ margin: 0 }}>Your judgment</h2>
-        {locked ? <span className="badge s-agreed"><Icon name="lock" size={12} />Submitted</span> : existing ? <span className="badge s-proposed">Draft</span> : <span className="badge neutral">Not started</span>}
+        {locked ? <span className="badge role"><Icon name="lock" size={12} />Submitted</span> : existing ? <span className="badge s-in_progress">Draft</span> : <span className="badge neutral">Not started</span>}
       </div>
       {vars.map((x, vi) => (
         <VariableInput key={x.id} variable={x} value={values[x.id]} onChange={(val) => set(x.id, val)} disabled={locked} shortcuts={x === firstCat} autoFocus={vi === 0} />

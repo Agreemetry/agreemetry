@@ -9,14 +9,22 @@ import { parseArchiveBytes } from '../../data/seed';
 import { normalizeOrcid } from '../../core/util';
 import { config, providerLabel } from '../../config';
 
-const FEATURES = [
-  ['Independent by design', 'Judgments stay concealed until the disclosure point you choose; blinded fields never reach adjudicators.'],
-  ['Disagreements found for you', 'Every completed item is compared under your agreement rule; disputes go to a live queue.'],
-  ['Resolution on the record', 'Standard options and rationales, free text, discussion, approvals and escalation, all versioned.'],
-  ['Reliability done right', 'Kappa, weighted kappa, Fleiss, Krippendorff, AC1 and ICC from the original judgments, with intervals and warnings.'],
-  ['Analysis-ready exports', 'Tidy CSV, Excel and JSON with a data dictionary, codebook and loaders for R, Python and Stata.'],
-  ['Any design', 'Screening, coding, verification, rubrics or expert panels, with any number of adjudicators.'],
+/** Each feature wears the colour of the stage it belongs to, so the landing page already teaches the colour system. */
+const FEATURES: [string, string, string, string][] = [
+  ['Independent by design', 'Judgments stay concealed until the disclosure point you choose; blinded fields never reach adjudicators.', 'lock', 'accent'],
+  ['Disagreements found for you', 'Every completed item is compared under your agreement rule; disputes go to a live queue.', 'disagree', 'dispute'],
+  ['Resolution on the record', 'Standard options and rationales, free text, discussion, approvals and escalation, all versioned.', 'check', 'resolved'],
+  ['Reliability done right', 'Kappa, weighted kappa, Fleiss, Krippendorff, AC1 and ICC from the original judgments, with intervals and warnings.', 'reliability', 'agree'],
+  ['Analysis-ready exports', 'Tidy CSV, Excel and JSON with a data dictionary, codebook and loaders for R, Python and Stata.', 'export', 'accent'],
+  ['Any design', 'Screening, coding, verification, rubrics or expert panels, with any number of adjudicators.', 'items', 'pending'],
 ];
+const TONE: Record<string, [string, string]> = {
+  accent: ['var(--accent-soft)', 'var(--accent)'],
+  dispute: ['var(--dispute-soft)', 'var(--dispute-ink)'],
+  resolved: ['var(--resolved-soft)', 'var(--resolved-ink)'],
+  agree: ['var(--agree-soft)', 'var(--agree-ink)'],
+  pending: ['var(--pending-soft)', 'var(--pending-ink)'],
+};
 
 export function SignIn() {
   const { backend, toast, fail } = useApp();
@@ -43,15 +51,25 @@ export function SignIn() {
     <div className="center-narrow">
       <section className="hero">
         <div>
-          <div className="row" style={{ marginBottom: 12 }}>
-            <Logo size={40} />
+          <div className="eyebrow">Open-source research adjudication</div>
+          <div className="row" style={{ marginBottom: 14, gap: 14 }}>
+            <Logo size={48} />
             <h1 style={{ margin: 0 }}>Agreemetry</h1>
           </div>
           <p className="lead">
             Independent judgments. Transparent consensus. Reproducible reliability. A workspace for research teams that classify, code, screen or rate material with two or more adjudicators.
           </p>
+          <div className="hero-flow" aria-label="How an item moves through Agreemetry">
+            <span style={{ ['--c' as string]: 'var(--state-in_progress)' }}><i />Independent judgments</span>
+            <b aria-label="then"><Icon name="right" size={13} /></b>
+            <span style={{ ['--c' as string]: 'var(--state-agreed)' }}><i />Agreed</span>
+            <b>or</b>
+            <span style={{ ['--c' as string]: 'var(--state-disagreement)' }}><i />Disagreement</span>
+            <b aria-label="then"><Icon name="right" size={13} /></b>
+            <span style={{ ['--c' as string]: 'var(--state-resolved)' }}><i />Resolved</span>
+          </div>
         </div>
-        <div className="card">
+        <div className="signin">
           {backend.mode === 'supabase' ? (
             <div className="stack">
               <h2>Sign in or register</h2>
@@ -118,8 +136,9 @@ export function SignIn() {
         </div>
       </section>
       <div className="features">
-        {FEATURES.map(([t, d]) => (
-          <div className="feature" key={t}>
+        {FEATURES.map(([t, d, icon, tone]) => (
+          <div className="feature" key={t} style={{ ['--fsoft' as string]: TONE[tone][0], ['--fink' as string]: TONE[tone][1] }}>
+            <span className="ficon" aria-hidden="true"><Icon name={icon} size={17} /></span>
             <strong>{t}</strong>
             <span>{d}</span>
           </div>

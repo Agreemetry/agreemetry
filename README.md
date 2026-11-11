@@ -80,6 +80,7 @@ npm run test:e2e -- http://localhost:4173/ e2e-shots "<path to chrome or msedge>
 | [Running a public instance](docs/HOSTING.md) | What an operator is responsible for: terms, privacy, ethics, backups |
 | [Architecture and security](docs/SECURITY_AND_ARCHITECTURE.md) | Layers, integrity guarantees, blinding, labs, tokens |
 | [Data formats](docs/DATA_FORMATS.md) | Import formats, exported tables, archives, packages |
+| [Design system](docs/DESIGN.md) | What each colour means, typography, chart conventions, how the palette was checked |
 
 ## Repository
 
