@@ -11,6 +11,7 @@ authors:
     family-names: Feyijimi
     alias: tiamole
 repository-code: "https://github.com/agreemetry/agreemetry"
+url: "https://agreemetry.org"
 license: Apache-2.0
 version: 1.0.0
 keywords:

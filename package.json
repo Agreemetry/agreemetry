@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Independent judgments, transparent consensus, reproducible reliability: an open-source research adjudication and interrater reliability platform.",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/agreemetry/agreemetry#readme",
+  "homepage": "https://agreemetry.org",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/agreemetry/agreemetry.git"

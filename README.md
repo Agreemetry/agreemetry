@@ -5,6 +5,8 @@
 [![CI](https://github.com/agreemetry/agreemetry/actions/workflows/ci.yml/badge.svg)](https://github.com/agreemetry/agreemetry/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
+Website: [agreemetry.org](https://agreemetry.org)
+
 Agreemetry is an open-source web platform for research teams in which two or more people independently classify, code, screen or rate the same material, resolve their disagreements, and report interrater reliability. It serves any field that relies on human judgment:
 
 - systematic review screening;
